@@ -4,6 +4,8 @@
 // @version      1.1.1
 // @description  本工具通过从window.HEAPU8中检索入睡次数（变量#43）来推测变量#44的地址
 // @author       Exsper
+// @homepage     https://github.com/Exsper/yno2kkivar44guess#readme
+// @supportURL   https://github.com/Exsper/yno2kkivar44guess/issues
 // @match        https://ynoproject.net/2kki/
 // @require      https://cdn.staticfile.org/jquery/2.1.3/jquery.min.js
 // @grant        none
