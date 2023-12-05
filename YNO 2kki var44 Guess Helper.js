@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YNOproject Yume2kki 变量44 推测
 // @namespace    https://github.com/Exsper/
-// @version      1.1.1
+// @version      1.1.2
 // @description  本工具通过从window.HEAPU8中检索入睡次数（变量#43）来推测变量#44的地址
 // @author       Exsper
 // @homepage     https://github.com/Exsper/yno2kkivar44guess#readme
@@ -52,6 +52,13 @@ function Int2HEAPU8Array(num) {
     let s3 = parseInt("0x" + s.substring(2, 4));
     let s4 = parseInt("0x" + s.substring(0, 2));
     return [s1, s2, s3, s4];
+}
+
+/**
+ * @param {Array<number>} array
+ */
+function HEAPU8Array2Int(array) {
+    return array.reduce((sum, cur, index) => sum += cur * Math.pow(256, index));
 }
 
 function getSeasonString(seasonNumber) {
@@ -187,14 +194,22 @@ class Script {
         let $mainTable = $("#rs-table");
         $mainTable.empty();
         [
-            { title: "变量#44", index: this.correctNum44Index, callFuc: null },
-            { title: "季节", index: this.correctNum44Index + 200, callFuc: getSeasonString },
+            { title: "入梦次数", index: this.correctNum44Index - 4, length: 4, callFuc: HEAPU8Array2Int },
+            { title: "变量#44", index: this.correctNum44Index, length: 1, callFuc: null },
+            { title: "季节", index: this.correctNum44Index + 200, length: 1, callFuc: getSeasonString },
         ].map((varLineData) => {
             let $ltr = $("<tr>", { style: "width:100%;" });
             let $ltd = $("<td>", { style: "width:50%" }).appendTo($ltr);
             $("<span>", { text: varLineData.title }).appendTo($ltd);
             $ltd = $("<td>").appendTo($ltr);
-            let data = window.HEAPU8[varLineData.index];
+            let data;
+            if (varLineData.length > 1) {
+                data = [];
+                for (let i = 0; i < varLineData.length; i++) data.push(window.HEAPU8[varLineData.index + i]);
+            }
+            else {
+                data = window.HEAPU8[varLineData.index];
+            }
             if (varLineData.callFuc) data = varLineData.callFuc(data);
             $("<span>", { text: data }).appendTo($ltd);
             $ltr.appendTo($mainTable);
