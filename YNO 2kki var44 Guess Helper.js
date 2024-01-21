@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         YNOproject Yume2kki 变量44 推测
 // @namespace    https://github.com/Exsper/
-// @version      1.1.2
-// @description  本工具通过从window.HEAPU8中检索入睡次数（变量#43）来推测变量#44的地址
+// @version      1.1.3
+// @description  本工具通过从HEAPU8中检索入睡次数（变量#43）来推测变量#44的地址
 // @author       Exsper
 // @homepage     https://github.com/Exsper/yno2kkivar44guess#readme
 // @supportURL   https://github.com/Exsper/yno2kkivar44guess/issues
@@ -88,11 +88,11 @@ function filterMemory(sleepIndexList, sleepCount) {
         if (sleepCountFirst % 4 != 0) continue; // 4字节存储
         let num44Index = sleepCountFirst + 4;
         // #44只有0-255，后三个字节均为0
-        if (window.HEAPU8[num44Index + 1] != 0 || window.HEAPU8[num44Index + 2] != 0 || window.HEAPU8[num44Index + 3] != 0) continue;
+        if (easyrpgPlayer["HEAPU8"][num44Index + 1] != 0 || easyrpgPlayer["HEAPU8"][num44Index + 2] != 0 || easyrpgPlayer["HEAPU8"][num44Index + 3] != 0) continue;
         // #94为季节，检查#94的值
-        if (window.HEAPU8[num44Index + 200] != getSeason(sleepCount)) continue;
+        if (easyrpgPlayer["HEAPU8"][num44Index + 200] != getSeason(sleepCount)) continue;
         // 以下为可能值
-        if (window.HEAPU8[num44Index] != 0) // #44很可能不为0，将不为0的位置前置
+        if (easyrpgPlayer["HEAPU8"][num44Index] != 0) // #44很可能不为0，将不为0的位置前置
             qualifiedList.unshift(num44Index);
         else
             qualifiedList.push(num44Index);
@@ -126,7 +126,7 @@ class Script {
                 $statLabel.text("请输入正整数");
                 $checkButton.text("确定");
             }
-            let result = filterMemory(findDataIndex(window.HEAPU8, Int2HEAPU8Array(sleepCount)), sleepCount);
+            let result = filterMemory(findDataIndex(easyrpgPlayer["HEAPU8"], Int2HEAPU8Array(sleepCount)), sleepCount);
             if (result.length <= 0) {
                 $checkButton.attr("disabled", false);
                 $statLabel.text("找不到符合条件的地址，请重试");
@@ -134,7 +134,7 @@ class Script {
             }
             else {
                 this.memoryIndexs = result;
-                this.isZero = this.memoryIndexs.map(mi => window.HEAPU8[mi] == 0);
+                this.isZero = this.memoryIndexs.map(mi => easyrpgPlayer["HEAPU8"][mi] == 0);
                 if (this.memoryIndexs.length > 1) {
                     $statLabel.text("找到多个符合条件的地址，请选择正确的#44变量。建议到伪部屋睡几次床，每次都会更新的就是#44变量");
                     this.updateSelectTable();
@@ -174,7 +174,7 @@ class Script {
             let $td = $("<td>").appendTo($tr);
             $("<span>", { text: "0x" + mi.toString(16) }).appendTo($td);
             $td = $("<td>").appendTo($tr);
-            $("<span>", { text: window.HEAPU8[mi] }).appendTo($td);
+            $("<span>", { text: easyrpgPlayer["HEAPU8"][mi] }).appendTo($td);
             $td = $("<td>").appendTo($tr);
             let $selbtn = $("<a>", { text: "选择", "data-index": mi, style: "cursor: pointer;" }).appendTo($td);
             $selbtn.click(() => {
@@ -205,10 +205,10 @@ class Script {
             let data;
             if (varLineData.length > 1) {
                 data = [];
-                for (let i = 0; i < varLineData.length; i++) data.push(window.HEAPU8[varLineData.index + i]);
+                for (let i = 0; i < varLineData.length; i++) data.push(easyrpgPlayer["HEAPU8"][varLineData.index + i]);
             }
             else {
-                data = window.HEAPU8[varLineData.index];
+                data = easyrpgPlayer["HEAPU8"][varLineData.index];
             }
             if (varLineData.callFuc) data = varLineData.callFuc(data);
             $("<span>", { text: data }).appendTo($ltd);
