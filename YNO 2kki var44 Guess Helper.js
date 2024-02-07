@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YNOproject Yume2kki 变量44 推测
 // @namespace    https://github.com/Exsper/
-// @version      1.2.0
+// @version      1.2.1
 // @description  本工具通过从HEAPU32中检索入睡次数（变量#43）来推测变量#44的地址
 // @author       Exsper
 // @homepage     https://github.com/Exsper/yno2kkivar44guess#readme
@@ -164,10 +164,13 @@ class Script {
             let index;
             let name;
             while (!index || typeof index !== "number" || index < 0) {
-                index = parseInt(prompt("请输入变量ID，例如：3513"));
+                index = prompt("请输入变量ID，例如：3513");
+                if (index === null) return;
+                index = parseInt(index);
             }
-            while (!name) {
+            while (!name || name.trim() === "") {
                 name = prompt("请给变量起个名字，例如：踏破率");
+                if (name === null) return;
             }
             this.customVars.push(new CustomVariable(index, name));
             alert("添加成功！如需删除请点击变量名。");
@@ -240,12 +243,12 @@ class Script {
         dataTableData.map((varLineData, index) => {
             let $ltr = $("<tr>", { style: "width:100%;" });
             let $ltd = $("<td>", { style: "width:50%" }).appendTo($ltr);
-            let $varTitle = $("<span>", { text: varLineData.title }).appendTo($ltd);
+            $("<span>", { text: varLineData.title }).appendTo($ltd);
             if (index > 2) { // 自定义项
-                $varTitle.click(() => {
+                $ltd.click(() => {
                     this.customVars = this.customVars.filter((customVarData) => customVarData.index !== varLineData.index);
                     this.saveStorage();
-                    $varTitle.parent().parent().remove();
+                    $ltd.parent().remove();
                 });
             }
             $ltd = $("<td>").appendTo($ltr);
