@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YNOproject Yume2kki 变量44 推测
 // @namespace    https://github.com/Exsper/
-// @version      1.2.1
+// @version      1.2.2
 // @description  本工具通过从HEAPU32中检索入睡次数（变量#43）来推测变量#44的地址
 // @author       Exsper
 // @homepage     https://github.com/Exsper/yno2kkivar44guess#readme
@@ -231,15 +231,21 @@ class Script {
         $("#rs-addvar").show();
         let $mainTable = $("#rs-table");
         $mainTable.empty();
+        // 默认项
         let dataTableData =
             [
                 { title: "入梦次数", index: 43, callFuc: null },
                 { title: "变量#44", index: 44, callFuc: null },
                 { title: "季节", index: [43, 94], callFuc: getSeasonString },
             ];
+        // 自定义项
         this.customVars.map((customData) => {
             dataTableData.push(customData.toTableData());
         });
+        // 地图项
+        let mapID = easyrpgPlayer["HEAPU32"][this.getVariableIndex(26)];
+        dataTableData.push(...(MapVariable.getMapVariableData(mapID)));
+
         dataTableData.map((varLineData, index) => {
             let $ltr = $("<tr>", { style: "width:100%;" });
             let $ltd = $("<td>", { style: "width:50%" }).appendTo($ltr);
@@ -257,17 +263,99 @@ class Script {
                 data = [];
                 for (let i = 0; i < varLineData.index.length; i++) data.push(easyrpgPlayer["HEAPU32"][this.getVariableIndex(varLineData.index[i])]);
                 if (varLineData.callFuc) data = varLineData.callFuc(...data);
+                $("<span>", { text: data, title: "使用变量：" + varLineData.index.join(",") }).appendTo($ltd);
             }
             else {
                 data = easyrpgPlayer["HEAPU32"][this.getVariableIndex(varLineData.index)];
                 if (varLineData.callFuc) data = varLineData.callFuc(data);
+                $("<span>", { text: data, title: "使用变量：" + varLineData.index }).appendTo($ltd);
             }
-            $("<span>", { text: data }).appendTo($ltd);
             $ltr.appendTo($mainTable);
         });
 
         setTimeout(() => { this.updateDataTable(); }, 1000);
     }
+}
+
+class MapVariable {
+    static getMapVariableData(mapID) {
+        switch (mapID) {
+            // Black Building
+            case 68: return [
+                { title: "楼层数", index: 610, callFuc: this.callFuc_68_610 },
+            ];
+            // Infinite Library
+            case 914: return [
+                { title: "当前深度", index: 1, callFuc: this.callFuc_914_1 },
+                { title: "预计深度", index: 2, callFuc: this.callFuc_914_2 },
+            ];
+            // Static Noise Hell
+            // 变量8后续用于别处，此功能无效
+            /*
+            case 945: return [
+                { title: "传送点位置", index: 8, callFuc: this.callFuc_945_8 },
+            ];
+            */
+            // Smiley Face DECK
+            case 1265: return [
+                { title: "传送点位置", index: 2, callFuc: this.callFuc_1265_2 },
+            ];
+            // Bright Forest
+            // 考虑到只用通过一次，可能会影响初次游戏体验，暂不启用该功能
+            /*
+            case 1348: return [
+                { title: "传送点位置", index: [2,3,4,5], callFuc: this.callFuc_1348_2_3_4_5 },
+            ];
+            */
+            default: return [];
+        }
+    }
+
+    // 以下函数命名规则：callFuc_[地图ID]_[变量ID]
+
+    static callFuc_68_610(val) {
+        return val + "/45";
+    }
+
+    static callFuc_914_1(val) {
+        return val + "/4";
+    }
+
+    static callFuc_914_2(val) {
+        if (val > 4) val = 0;
+        return "=>" + val;
+    }
+
+    /*
+    static callFuc_945_8(val) {
+        switch(val) {
+            case 0: return "正上方偏左";
+            case 1: return "左下角靠下";
+            case 2: return "左下角靠左";
+            case 3: return "最右上角";
+            default: return "中间偏右上";
+        }
+    }
+    */
+
+    static callFuc_1265_2(val) {
+        switch(val) {
+            case 1: return "右边居中";
+            case 2: return "右下";
+            case 3: return "左下";
+            case 4: return "右上";
+            default: return "错误";
+        }
+    }
+
+    /*
+    static callFuc_1348_2_3_4_5(val2, val3, val4, val5) {
+        if (val2 != 0) return "右上";
+        else if (val3 != 0) return "右下";
+        else if (val4 != 0) return "中间";
+        else if (val5 != 0) return "左下";
+    }
+    */
 }
 
 $(document).ready(() => {

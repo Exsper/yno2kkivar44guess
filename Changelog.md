@@ -1,6 +1,13 @@
-# Changelog
+# 更新日志
 
 ## 1.2
+
+### 1.2.2
+
+- (NEW) 特定地图变量在特定地图中才显示
+- (NEW) 添加内置变量（Black Building相关）
+- (NEW) 添加内置变量（Infinite Library相关）
+- (NEW) 添加内置变量（Smiley Face DECK相关）
 
 ### 1.2.1
 
