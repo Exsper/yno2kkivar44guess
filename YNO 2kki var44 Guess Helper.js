@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YNOproject Yume2kki 变量44 推测
 // @namespace    https://github.com/Exsper/
-// @version      1.2.2
+// @version      1.2.3
 // @description  本工具通过从HEAPU32中检索入睡次数（变量#43）来推测变量#44的地址
 // @author       Exsper
 // @homepage     https://github.com/Exsper/yno2kkivar44guess#readme
@@ -97,6 +97,7 @@ class CustomVariable {
 
 class Script {
     constructor() {
+        this.sleepCount = -1;
         this.memoryIndexs = [];
         this.correctNum44Index = -1;
         this.customVars = [];
@@ -105,11 +106,13 @@ class Script {
     loadStorage() {
         let customVarsData = GM_getValue("customVarsData", []);
         this.customVars.push(...(customVarsData.map((data) => new CustomVariable(data[0], data[1]))));
+        this.sleepCount = GM_getValue("sleepCount", -1);
     }
 
     saveStorage() {
         let customVarsData = this.customVars.map((customVar) => [customVar.index, customVar.name]);
         GM_setValue("customVarsData", customVarsData);
+        GM_setValue("sleepCount", this.sleepCount);
     }
 
     init() {
@@ -123,6 +126,7 @@ class Script {
         $mainDiv.hide();
         let $statLabel = $("<span>", { id: "rs-stat", text: "请输入睡眠次数，即存档后显示的Day数。如果已经在梦境中需要+1" }).appendTo($mainDiv);
         let $numBox = $("<input>", { type: "text", id: "rs-sleepcount", val: "100", style: "width:30px;align-self:center;" }).appendTo($mainDiv);
+        if (this.sleepCount > 0) $numBox.val(this.sleepCount);
         let $checkButton = $('<button>', { type: "button", text: "确定", id: "rs-checkbtn", style: "width:fit-content;align-self:center;" }).appendTo($mainDiv);
         $checkButton.click(() => {
             $checkButton.attr("disabled", true);
@@ -140,6 +144,8 @@ class Script {
                 $checkButton.text("确定");
             }
             else {
+                this.sleepCount = sleepCount;
+                this.saveStorage();
                 this.memoryIndexs = result;
                 this.isZero = this.memoryIndexs.map(mi => easyrpgPlayer["HEAPU32"][mi] == 0);
                 if (this.memoryIndexs.length > 1) {
@@ -158,6 +164,10 @@ class Script {
         let $thead = $("<thead>").appendTo($titleTable);
         let $tr = $("<tr>").appendTo($thead);
         let $td = $("<td>").appendTo($tr);
+        let $initSessionWsButton = $('<button>', { text: "⟳", id: "rs-reconnect", style: "float: left;", title: "尝试重连" }).appendTo($td);
+        $initSessionWsButton.click(() => {
+            initSessionWs();
+        });
         let $addVarButton = $('<button>', { text: "+", id: "rs-addvar", style: "float: left;", title: "添加自定义变量" }).appendTo($td);
         $addVarButton.hide();
         $addVarButton.click(() => {
