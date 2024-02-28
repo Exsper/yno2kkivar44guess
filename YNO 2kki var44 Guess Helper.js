@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YNOproject Yume2kki 变量44 推测
 // @namespace    https://github.com/Exsper/
-// @version      1.2.3
+// @version      1.2.4
 // @description  本工具通过从HEAPU32中检索入睡次数（变量#43）来推测变量#44的地址
 // @author       Exsper
 // @homepage     https://github.com/Exsper/yno2kkivar44guess#readme
@@ -122,7 +122,7 @@ class Script {
             $("#rs-div").show();
             $("#rs-open").hide();
         });
-        let $mainDiv = $("<div>", { id: "rs-div", class: "modal", style: "top:30%;left:0%;width:180px;position:absolute;text-align:center;z-index:999;max-height:250px;overflow-y:auto;" });
+        let $mainDiv = $("<div>", { id: "rs-div", class: "container", style: "top:30%;left:0%;width:180px;position:absolute;text-align:center;z-index:999;height:auto;max-height:250px;min-height:135px;overflow-y:auto;border-top: 24px double #000000 !important;padding-top: 0px !important;" });
         $mainDiv.hide();
         let $statLabel = $("<span>", { id: "rs-stat", text: "请输入睡眠次数，即存档后显示的Day数。如果已经在梦境中需要+1" }).appendTo($mainDiv);
         let $numBox = $("<input>", { type: "text", id: "rs-sleepcount", val: "100", style: "width:30px;align-self:center;" }).appendTo($mainDiv);
@@ -160,15 +160,14 @@ class Script {
                 $checkButton.hide();
             }
         });
-        let $titleTable = $("<table>", { id: "rs-title", style: "table-layout:fixed;" }).prependTo($mainDiv);
-        let $thead = $("<thead>").appendTo($titleTable);
-        let $tr = $("<tr>").appendTo($thead);
-        let $td = $("<td>").appendTo($tr);
-        let $initSessionWsButton = $('<button>', { text: "⟳", id: "rs-reconnect", style: "float: left;", title: "尝试重连" }).appendTo($td);
+        let $titleDiv = $("<div>", { id: "rs-title", style: "width: 100%; display: flex;" }).prependTo($mainDiv);
+        let $rightDiv = $("<div>", { id: "rs-title-right", style: "display: flex; justify-content: right;" }).prependTo($titleDiv);
+        let $leftDiv = $("<div>", { id: "rs-title-left", style: "width: 100%; display: flex; justify-content: left;" }).prependTo($titleDiv);
+        let $initSessionWsButton = $('<button>', { text: "⟳", id: "rs-reconnect", style: "float: left;", title: "尝试重连" }).appendTo($leftDiv);
         $initSessionWsButton.click(() => {
             initSessionWs();
         });
-        let $addVarButton = $('<button>', { text: "+", id: "rs-addvar", style: "float: left;", title: "添加自定义变量" }).appendTo($td);
+        let $addVarButton = $('<button>', { text: "+", id: "rs-addvar", style: "float: left;", title: "添加自定义变量" }).appendTo($leftDiv);
         $addVarButton.hide();
         $addVarButton.click(() => {
             let index;
@@ -186,13 +185,12 @@ class Script {
             alert("添加成功！如需删除请点击变量名。");
             this.saveStorage();
         });
-        $td = $("<td>").appendTo($tr);
-        let $closeButton = $('<button>', { text: "-", id: "rs-close", style: "float: right;", title: "隐藏窗口" }).appendTo($td);
+        let $closeButton = $('<button>', { text: "-", id: "rs-close", style: "float: right;", title: "隐藏窗口" }).appendTo($rightDiv);
         $closeButton.click(() => {
             $("#rs-div").hide();
             $("#rs-open").show();
         });
-        let $mainTable = $("<table>", { id: "rs-table", style: "table-layout:fixed;" }).appendTo($mainDiv);
+        let $mainTable = $("<table>", { id: "rs-table", style: "table-layout:fixed; width:100%;" }).appendTo($mainDiv);
         $mainDiv.appendTo($("body"));
     }
 
@@ -349,7 +347,7 @@ class MapVariable {
     */
 
     static callFuc_1265_2(val) {
-        switch(val) {
+        switch (val) {
             case 1: return "右边居中";
             case 2: return "右下";
             case 3: return "左下";
@@ -368,7 +366,16 @@ class MapVariable {
     */
 }
 
+// 确保网页加载完成
+function check() {
+    let $loaded = $("#loadingOverlay.loaded");
+    if ($loaded.length > 0) {
+        let script = new Script();
+        script.init();
+    }
+    else setTimeout(function () { check(); }, 2000);
+}
+
 $(document).ready(() => {
-    let script = new Script();
-    script.init();
+    check();
 });

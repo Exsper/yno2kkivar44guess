@@ -35,3 +35,13 @@
 ### 不换日刷新法
 
 在[奇妙数](https://yume.wiki/2kki/Numeral_Hallways)的最下方锯墙壁，画面上方数字变为“3”时，变量#44刷新。
+
+## 其他
+
+### 关于hook的构想
+
+hook onPlayerTeleported 获取 mapId（变量10） 和主角位置（变量22和23），然后进行筛选
+
+测试时出现了 onPlayerTeleported 被无限调用的问题，失败了
+
+考虑到安全性，放弃该策略
