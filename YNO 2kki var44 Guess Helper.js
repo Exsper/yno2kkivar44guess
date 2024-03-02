@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         YNOproject Yume2kki 变量44 推测
 // @namespace    https://github.com/Exsper/
-// @version      1.2.4
-// @description  本工具通过从HEAPU32中检索入睡次数（变量#43）来推测变量#44的地址
+// @version      1.2.5
+// @description  本工具通过从HEAPU32中检索入睡次数（变量#43）来推测变量#44的地址，实时显示变量的数值
 // @author       Exsper
 // @homepage     https://github.com/Exsper/yno2kkivar44guess#readme
 // @supportURL   https://github.com/Exsper/yno2kkivar44guess/issues
@@ -122,9 +122,9 @@ class Script {
             $("#rs-div").show();
             $("#rs-open").hide();
         });
-        let $mainDiv = $("<div>", { id: "rs-div", class: "container", style: "top:30%;left:0%;width:180px;position:absolute;text-align:center;z-index:999;height:auto;max-height:250px;min-height:135px;overflow-y:auto;border-top: 24px double #000000 !important;padding-top: 0px !important;" });
+        let $mainDiv = $("<div>", { id: "rs-div", class: "container", style: "top:30%;left:0%;width:180px;position:absolute;text-align:center;z-index:999;height:auto;max-height:250px;min-height:160px;overflow-y:auto;border-top: 24px double #000000 !important;padding-top: 0px !important;" });
         $mainDiv.hide();
-        let $statLabel = $("<span>", { id: "rs-stat", text: "请输入睡眠次数，即存档后显示的Day数。如果已经在梦境中需要+1" }).appendTo($mainDiv);
+        let $statLabel = $("<span>", { id: "rs-stat", text: "请在 读取存档 后输入睡眠次数，即存档后显示的Day数。如果已经在梦境中需要+1", style: "display: block; padding: 6px;" }).appendTo($mainDiv);
         let $numBox = $("<input>", { type: "text", id: "rs-sleepcount", val: "100", style: "width:30px;align-self:center;" }).appendTo($mainDiv);
         if (this.sleepCount > 0) $numBox.val(this.sleepCount);
         let $checkButton = $('<button>', { type: "button", text: "确定", id: "rs-checkbtn", style: "width:fit-content;align-self:center;" }).appendTo($mainDiv);
@@ -163,6 +163,10 @@ class Script {
         let $titleDiv = $("<div>", { id: "rs-title", style: "width: 100%; display: flex;" }).prependTo($mainDiv);
         let $rightDiv = $("<div>", { id: "rs-title-right", style: "display: flex; justify-content: right;" }).prependTo($titleDiv);
         let $leftDiv = $("<div>", { id: "rs-title-left", style: "width: 100%; display: flex; justify-content: left;" }).prependTo($titleDiv);
+        let $backButton = $('<button>', { text: "←", id: "rs-back", style: "float: left;", title: "重新输入入睡次数" }).appendTo($leftDiv);
+        $backButton.click(() => {
+            this.reload();
+        });
         let $initSessionWsButton = $('<button>', { text: "⟳", id: "rs-reconnect", style: "float: left;", title: "尝试重连" }).appendTo($leftDiv);
         $initSessionWsButton.click(() => {
             initSessionWs();
@@ -192,6 +196,19 @@ class Script {
         });
         let $mainTable = $("<table>", { id: "rs-table", style: "table-layout:fixed; width:100%;" }).appendTo($mainDiv);
         $mainDiv.appendTo($("body"));
+    }
+
+    reload() {
+        this.sleepCount = -1;
+        this.memoryIndexs = [];
+        this.correctNum44Index = -1;
+        $("#rs-table").empty();
+        $("#rs-stat").text("请在 读取存档 后输入睡眠次数，即存档后显示的Day数。如果已经在梦境中需要+1");
+        $("#rs-sleepcount").show();
+        $("#rs-checkbtn").show();
+        $("#rs-checkbtn").attr("disabled", false);
+        $("#rs-checkbtn").text("确定");
+        $("#rs-addvar").hide();
     }
 
     updateSelectTable() {
