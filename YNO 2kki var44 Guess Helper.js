@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YNOproject Yume2kki 变量44 推测
 // @namespace    https://github.com/Exsper/
-// @version      1.2.5
+// @version      1.2.6
 // @description  本工具通过从HEAPU32中检索入睡次数（变量#43）来推测变量#44的地址，实时显示变量的数值
 // @author       Exsper
 // @homepage     https://github.com/Exsper/yno2kkivar44guess#readme
@@ -101,18 +101,21 @@ class Script {
         this.memoryIndexs = [];
         this.correctNum44Index = -1;
         this.customVars = [];
+        this.showMapDefaultVars = -1;
     }
 
     loadStorage() {
         let customVarsData = GM_getValue("customVarsData", []);
         this.customVars.push(...(customVarsData.map((data) => new CustomVariable(data[0], data[1]))));
         this.sleepCount = GM_getValue("sleepCount", -1);
+        this.showMapDefaultVars = GM_getValue("showMapDefaultVars", -1);
     }
 
     saveStorage() {
         let customVarsData = this.customVars.map((customVar) => [customVar.index, customVar.name]);
         GM_setValue("customVarsData", customVarsData);
         GM_setValue("sleepCount", this.sleepCount);
+        GM_setValue("showMapDefaultVars", this.showMapDefaultVars);
     }
 
     init() {
@@ -171,6 +174,19 @@ class Script {
         $initSessionWsButton.click(() => {
             initSessionWs();
         });
+        let $showMapDefaultVarsButton = $('<button>', { text: (this.showMapDefaultVars <= 0) ? "🌙" : "🔍", id: "rs-showmapvar", style: "float: left;", title: "显示部分地图状态，帮助跑图" }).appendTo($leftDiv);
+        $showMapDefaultVarsButton.hide();
+        $showMapDefaultVarsButton.click(() => {
+            if (this.showMapDefaultVars <= 0) {
+                this.showMapDefaultVars = 1;
+                $showMapDefaultVarsButton.text("🔍");
+            }
+            else {
+                this.showMapDefaultVars = 0;
+                $showMapDefaultVarsButton.text("🌙");
+            }
+            this.saveStorage();
+        });
         let $addVarButton = $('<button>', { text: "+", id: "rs-addvar", style: "float: left;", title: "添加自定义变量" }).appendTo($leftDiv);
         $addVarButton.hide();
         $addVarButton.click(() => {
@@ -209,6 +225,7 @@ class Script {
         $("#rs-checkbtn").attr("disabled", false);
         $("#rs-checkbtn").text("确定");
         $("#rs-addvar").hide();
+        $("#rs-showmapvar").hide();
     }
 
     updateSelectTable() {
@@ -254,6 +271,7 @@ class Script {
         if (this.correctNum44Index <= 0) return;
         $("#rs-stat").text("当前状态");
         $("#rs-addvar").show();
+        $("#rs-showmapvar").show();
         let $mainTable = $("#rs-table");
         $mainTable.empty();
         // 默认项
@@ -268,8 +286,10 @@ class Script {
             dataTableData.push(customData.toTableData());
         });
         // 地图项
-        let mapID = easyrpgPlayer["HEAPU32"][this.getVariableIndex(26)];
-        dataTableData.push(...(MapVariable.getMapVariableData(mapID)));
+        if (this.showMapDefaultVars > 0) {
+            let mapID = easyrpgPlayer["HEAPU32"][this.getVariableIndex(26)];
+            dataTableData.push(...(MapVariable.getMapVariableData(mapID)));
+        }
 
         dataTableData.map((varLineData, index) => {
             let $ltr = $("<tr>", { style: "width:100%;" });
@@ -332,6 +352,23 @@ class MapVariable {
                 { title: "传送点位置", index: [2,3,4,5], callFuc: this.callFuc_1348_2_3_4_5 },
             ];
             */
+            // 岛子Shimako相关
+            case 1824: // 釣り堀
+            case 1825: // 万華鏡の世界
+            case 1826: // 通路（包括万华镜小区域怪物、六角形区域触手怪物）
+            case 1871: // home
+            case 1873: // 白い世界
+            case 1874: // 白い世界
+            case 1882: // 湖のほとり
+            case 1890: // さんかく遺跡 
+                return [
+                { title: "岛子事件红怪剩余", index: 4246, callFuc: this.callFuc_multi_4246 },
+            ];
+            // Rainy Apartments 楼梯
+            case 1902: return [
+                { title: "阶梯数", index: 80, callFuc: this.callFuc_1902_80 },
+            ];
+            
             default: return [];
         }
     }
@@ -381,6 +418,40 @@ class MapVariable {
         else if (val5 != 0) return "左下";
     }
     */
+
+    static callFuc_multi_4246(val) {
+        let tmp = val;
+        let sum = [];
+        // 病院后悬崖上眼球
+        let hospitalDied = Math.floor(tmp / 640);
+        tmp -= hospitalDied * 640;
+        // 六角触手
+        let hexagonDied = Math.floor(tmp / 320);
+        tmp -= hexagonDied * 320;
+        // 钓鱼人头
+        let fishDied = Math.floor(tmp / 160);
+        tmp -= fishDied * 160;
+        // 万华镜眼球
+        let scopeDied = Math.floor(tmp / 80);
+        tmp -= scopeDied * 80;
+        // 水坝怪物
+        let damDied = Math.floor(tmp / 40);
+        tmp -= damDied * 40;
+        // 吸水怪物
+        let drinkDied = Math.floor(tmp / 20);
+        // tmp -= drinkDied * 20;
+        if (drinkDied === 0) sum.push("树海A");
+        if (scopeDied === 0) sum.push("万华镜");
+        if (hexagonDied === 0) sum.push("六棱柱");
+        if (fishDied === 0) sum.push("码头");
+        if (damDied === 0) sum.push("树海B");
+        if (hospitalDied === 0) sum.push("悬崖");
+        return sum.join("/");
+    }
+
+    static callFuc_1902_80(val) {
+        return val + "/144";
+    }
 }
 
 // 确保网页加载完成
