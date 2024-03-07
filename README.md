@@ -1,5 +1,7 @@
 # YNOproject Yume2kki 变量44 推测
 
+[更新日志](https://github.com/Exsper/yno2kkivar44guess/blob/master/Changelog.md) [GreasyFork](https://greasyfork.org/zh-CN/scripts/485388-ynoproject-yume2kki-%E5%8F%98%E9%87%8F44-%E6%8E%A8%E6%B5%8B)
+
 本工具通过遍历内存数据来筛选可能为变量#44的地址，实时显示变量#44及其他变量的值。
 
 使用本工具会改变原有的游戏体验，推荐对游戏有深入了解后再使用。
@@ -24,7 +26,21 @@
 
 脚本检索后，如发现多个可能的变量地址，需要自主选择（一般不为0，睡觉后会变化）
 
-显示变量时，点击左上角“+”按钮可以任意添加需要显示的变量
+### 操作界面
+
+显示变量时，左上角会出现更多按钮
+
+- “←” 按钮： 退回脚本主界面，重新输入入睡次数，便于更正输入或切换存档
+- “⟳” 按钮： 手动重连多人系统（等效于控制台执行initSessionWs()），但无法解决加载地图失败导致的黑屏问题
+- “🌙/🔍” 按钮： 切换是否显示部分地图中脚本内置的变量，切换到“🔍”状态为显示
+
+  当前内置的变量：
+  - Black Building 楼层数
+  - Infinite Library 深度
+  - Smiley Face DECK 传送点位置
+  - Shimako 事件红怪剩余
+  - Rainy Apartments 楼梯数
+- “+” 按钮： 可以任意添加需要显示的变量
 
 ## 刷新变量#44方法（当前版本0.122d）
 
@@ -45,3 +61,7 @@ hook onPlayerTeleported 获取 mapId（变量10） 和主角位置（变量22和
 测试时出现了 onPlayerTeleported 被无限调用的问题，失败了
 
 考虑到安全性，放弃该策略
+
+### 关于开关
+
+今后可能会尝试对开关的获取

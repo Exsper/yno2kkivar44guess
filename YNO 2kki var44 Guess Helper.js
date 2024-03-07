@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         YNOproject Yume2kki 变量44 推测
 // @namespace    https://github.com/Exsper/
-// @version      1.2.6
-// @description  本工具通过从HEAPU32中检索入睡次数（变量#43）来推测变量#44的地址，实时显示变量的数值
+// @version      1.2.7
+// @description  本工具通过从 HEAPU32 中检索入睡次数（变量#43）来推测 变量#44 的地址，实时显示变量的数值。可以在 GreasyFork 页面查看详细说明。
 // @author       Exsper
 // @homepage     https://github.com/Exsper/yno2kkivar44guess#readme
 // @supportURL   https://github.com/Exsper/yno2kkivar44guess/issues
@@ -125,7 +125,7 @@ class Script {
             $("#rs-div").show();
             $("#rs-open").hide();
         });
-        let $mainDiv = $("<div>", { id: "rs-div", class: "container", style: "top:30%;left:0%;width:180px;position:absolute;text-align:center;z-index:999;height:auto;max-height:250px;min-height:160px;overflow-y:auto;border-top: 24px double #000000 !important;padding-top: 0px !important;" });
+        let $mainDiv = $("<div>", { id: "rs-div", class: "container", style: "top:40%;left:0%;transform: translate(0, -50%);width:180px;position:absolute;text-align:center;z-index:999;height:auto;max-height:70vh;min-height:160px;overflow-y:auto;border-top: 24px double #000000 !important;padding-top: 0px !important;" });
         $mainDiv.hide();
         let $statLabel = $("<span>", { id: "rs-stat", text: "请在 读取存档 后输入睡眠次数，即存档后显示的Day数。如果已经在梦境中需要+1", style: "display: block; padding: 6px;" }).appendTo($mainDiv);
         let $numBox = $("<input>", { type: "text", id: "rs-sleepcount", val: "100", style: "width:30px;align-self:center;" }).appendTo($mainDiv);
@@ -166,15 +166,15 @@ class Script {
         let $titleDiv = $("<div>", { id: "rs-title", style: "width: 100%; display: flex;" }).prependTo($mainDiv);
         let $rightDiv = $("<div>", { id: "rs-title-right", style: "display: flex; justify-content: right;" }).prependTo($titleDiv);
         let $leftDiv = $("<div>", { id: "rs-title-left", style: "width: 100%; display: flex; justify-content: left;" }).prependTo($titleDiv);
-        let $backButton = $('<button>', { text: "←", id: "rs-back", style: "float: left;", title: "重新输入入睡次数" }).appendTo($leftDiv);
+        let $backButton = $('<button>', { text: "←", id: "rs-back", title: "重新输入入睡次数" }).appendTo($leftDiv);
         $backButton.click(() => {
             this.reload();
         });
-        let $initSessionWsButton = $('<button>', { text: "⟳", id: "rs-reconnect", style: "float: left;", title: "尝试重连" }).appendTo($leftDiv);
+        let $initSessionWsButton = $('<button>', { text: "⟳", id: "rs-reconnect", title: "尝试重连" }).appendTo($leftDiv);
         $initSessionWsButton.click(() => {
             initSessionWs();
         });
-        let $showMapDefaultVarsButton = $('<button>', { text: (this.showMapDefaultVars <= 0) ? "🌙" : "🔍", id: "rs-showmapvar", style: "float: left;", title: "显示部分地图状态，帮助跑图" }).appendTo($leftDiv);
+        let $showMapDefaultVarsButton = $('<button>', { text: (this.showMapDefaultVars <= 0) ? "🌙" : "🔍", id: "rs-showmapvar", title: "显示部分地图状态，帮助跑图" }).appendTo($leftDiv);
         $showMapDefaultVarsButton.hide();
         $showMapDefaultVarsButton.click(() => {
             if (this.showMapDefaultVars <= 0) {
@@ -187,7 +187,7 @@ class Script {
             }
             this.saveStorage();
         });
-        let $addVarButton = $('<button>', { text: "+", id: "rs-addvar", style: "float: left;", title: "添加自定义变量" }).appendTo($leftDiv);
+        let $addVarButton = $('<button>', { text: "+", id: "rs-addvar", title: "添加自定义变量" }).appendTo($leftDiv);
         $addVarButton.hide();
         $addVarButton.click(() => {
             let index;
@@ -205,12 +205,12 @@ class Script {
             alert("添加成功！如需删除请点击变量名。");
             this.saveStorage();
         });
-        let $closeButton = $('<button>', { text: "-", id: "rs-close", style: "float: right;", title: "隐藏窗口" }).appendTo($rightDiv);
+        let $closeButton = $('<button>', { text: "-", id: "rs-close", title: "隐藏窗口" }).appendTo($rightDiv);
         $closeButton.click(() => {
             $("#rs-div").hide();
             $("#rs-open").show();
         });
-        let $mainTable = $("<table>", { id: "rs-table", style: "table-layout:fixed; width:100%;" }).appendTo($mainDiv);
+        let $mainTable = $("<table>", { id: "rs-table", style: "table-layout:fixed; width:100%; word-wrap: break-word;" }).appendTo($mainDiv);
         $mainDiv.appendTo($("body"));
     }
 
@@ -362,13 +362,13 @@ class MapVariable {
             case 1882: // 湖のほとり
             case 1890: // さんかく遺跡 
                 return [
-                { title: "岛子事件红怪剩余", index: 4246, callFuc: this.callFuc_multi_4246 },
-            ];
+                    { title: "岛子事件红怪剩余", index: 4246, callFuc: this.callFuc_multi_4246 },
+                ];
             // Rainy Apartments 楼梯
             case 1902: return [
                 { title: "阶梯数", index: 80, callFuc: this.callFuc_1902_80 },
             ];
-            
+
             default: return [];
         }
     }
