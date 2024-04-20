@@ -40,6 +40,7 @@
   - Smiley Face DECK 传送点位置
   - Shimako 事件红怪剩余
   - Rainy Apartments 楼梯数
+  - Horror Maze 玫瑰数及小地图
 - “+” 按钮： 可以任意添加需要显示的变量
 
 ## 刷新变量#44方法（当前版本0.122d）
