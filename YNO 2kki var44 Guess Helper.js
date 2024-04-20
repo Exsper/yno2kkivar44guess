@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YNOproject Yume2kki 变量44 推测
 // @namespace    https://github.com/Exsper/
-// @version      1.2.7
+// @version      1.2.8
 // @description  本工具通过从 HEAPU32 中检索入睡次数（变量#43）来推测 变量#44 的地址，实时显示变量的数值。可以在 GreasyFork 页面查看详细说明。
 // @author       Exsper
 // @homepage     https://github.com/Exsper/yno2kkivar44guess#readme
@@ -14,7 +14,7 @@
 // @run-at       document-end
 // ==/UserScript==
 
-
+let VAR_UPDATE_INTERVAL = 1000;
 
 /**
  * @param {Array<number>} sourceArray 
@@ -289,8 +289,9 @@ class Script {
         if (this.showMapDefaultVars > 0) {
             let mapID = easyrpgPlayer["HEAPU32"][this.getVariableIndex(26)];
             dataTableData.push(...(MapVariable.getMapVariableData(mapID)));
+            // 特殊地图刷新间隔
+            VAR_UPDATE_INTERVAL = MapVariable.getMapUpdateInterval(mapID);
         }
-
         dataTableData.map((varLineData, index) => {
             let $ltr = $("<tr>", { style: "width:100%;" });
             let $ltd = $("<td>", { style: "width:50%" }).appendTo($ltr);
@@ -308,21 +309,32 @@ class Script {
                 data = [];
                 for (let i = 0; i < varLineData.index.length; i++) data.push(easyrpgPlayer["HEAPU32"][this.getVariableIndex(varLineData.index[i])]);
                 if (varLineData.callFuc) data = varLineData.callFuc(...data);
-                $("<span>", { text: data, title: "使用变量：" + varLineData.index.join(",") }).appendTo($ltd);
+                if (typeof data !== "object") $("<span>", { text: data, title: "使用变量：" + varLineData.index.join(",") }).appendTo($ltd);
+                else data.appendTo($ltd);
             }
             else {
                 data = easyrpgPlayer["HEAPU32"][this.getVariableIndex(varLineData.index)];
                 if (varLineData.callFuc) data = varLineData.callFuc(data);
-                $("<span>", { text: data, title: "使用变量：" + varLineData.index }).appendTo($ltd);
+                if (typeof data !== "object") $("<span>", { text: data, title: "使用变量：" + varLineData.index }).appendTo($ltd);
+                else data.appendTo($ltd);
             }
             $ltr.appendTo($mainTable);
         });
 
-        setTimeout(() => { this.updateDataTable(); }, 1000);
+        setTimeout(() => { this.updateDataTable(); }, VAR_UPDATE_INTERVAL);
     }
 }
 
 class MapVariable {
+    static getMapUpdateInterval(mapID) {
+        switch (mapID) {
+            // Horror Maze
+            case 1445: return 200;
+
+            default: return 1000;
+        }
+    }
+
     static getMapVariableData(mapID) {
         switch (mapID) {
             // Black Building
@@ -352,6 +364,11 @@ class MapVariable {
                 { title: "传送点位置", index: [2,3,4,5], callFuc: this.callFuc_1348_2_3_4_5 },
             ];
             */
+            // Horror Maze
+            case 1445: return [
+                { title: "玫瑰数", index: 4782 },
+                { title: "位置", index: [2, 3, 4, 4782], callFuc: this.callFuc_1445_2_3_4_4782 },
+            ];
             // 岛子Shimako相关
             case 1824: // 釣り堀
             case 1825: // 万華鏡の世界
@@ -419,6 +436,17 @@ class MapVariable {
     }
     */
 
+    /**
+     * @param {number} val2 monster pos
+     * @param {number} val3 player pos
+     * @param {1|2|3|4} val4 ↑1 →2 ↓3 ←4
+     * @param {number} val4782 rose count
+     */
+    static callFuc_1445_2_3_4_4782(val2, val3, val4, val4782) {
+        let imageDataUrl = HorrorMazeStuffs.getImage(val2, val3, val4, val4782);
+        return $(`<img src="${imageDataUrl}">`);
+    }
+
     static callFuc_multi_4246(val) {
         let tmp = val;
         let sum = [];
@@ -453,6 +481,230 @@ class MapVariable {
         return val + "/144";
     }
 }
+
+class HorrorMazeStuffs {
+    static background = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAABaCAIAAACDsxdJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAFXSURBVHhe7dj9DYIwEAVwdAT+xRV0Bd3AWd1AF3IGCZxFPVLbaykPeL+YiJaPXPpCD3aHpqmyqutatgray/fCraSMIVTXy7nfsLndH/0GQ2W33lC5eGgh+zBUdiyj00bohwyUxdlAklrGU5GBsjgbSIzLn8aeKoNth4o91SRYRqdro77IQFmcDSSpZUgj9UEGyuJsIOF7KiSrC5UW0kFpDJXdWkJ1Oh5l880tYTpUc7VMfzFUSIZQ6XbIdqeaBUOFZCRUic1VSS7tDBUSX6hsNyh9uOeEtmvpoxgqJEGhcv9EYaiibTJUIVMfdbgbsmGoIMX1VNOFKuTMjj6KoULiK6Odsv4jv4ExVEhYBhKWgYRlIJnw6S8Xvf6yp8JmfPrT/2TnuQRDhY1lIGEZSFgGktTlrwAuf0uT/426R9R5PDszVNhYBpIN3Knw8U4FaSRUS8RQ4aiqF/sK8E80KPOTAAAAAElFTkSuQmCC";
+    static poss = {
+        1: { x: 36, y: 84 },
+        2: { x: 36, y: 80 },
+        3: { x: 36, y: 75 },
+        4: { x: 27, y: 75 },
+        5: { x: 18, y: 75 },
+        6: { x: 18, y: 69 },
+        7: { x: 18, y: 63 },
+        8: { x: 15, y: 63 },
+        9: { x: 12, y: 63 },
+        10: { x: 12, y: 69 },
+        11: { x: 12, y: 74 },
+        12: { x: 12, y: 79 },
+        13: { x: 12, y: 84 },
+        14: { x: 18, y: 84 },
+        15: { x: 24, y: 84 },
+        16: { x: 30, y: 84 },
+        17: { x: 9, y: 84 },
+        18: { x: 6, y: 84 },
+        19: { x: 6, y: 79 },
+        20: { x: 6, y: 74 },
+        21: { x: 6, y: 69 },
+        22: { x: 6, y: 63 },
+        23: { x: 6, y: 57 },
+        24: { x: 6, y: 51 },
+        25: { x: 9, y: 51 },
+        26: { x: 12, y: 51 },
+        27: { x: 12, y: 57 },
+        28: { x: 12, y: 45 },
+        29: { x: 17, y: 45 },
+        30: { x: 22, y: 45 },
+        31: { x: 27, y: 45 },
+        32: { x: 27, y: 51 },
+        33: { x: 27, y: 57 },
+        34: { x: 27, y: 63 },
+        35: { x: 30, y: 63 },
+        36: { x: 33, y: 63 },
+        37: { x: 37, y: 63 },
+        38: { x: 42, y: 63 },
+        39: { x: 51, y: 63 },
+        40: { x: 51, y: 69 },
+        41: { x: 51, y: 75 },
+        42: { x: 46, y: 75 },
+        43: { x: 41, y: 75 },
+        44: { x: 44, y: 84 },
+        45: { x: 51, y: 84 },
+        46: { x: 51, y: 80 },
+        47: { x: 55, y: 84 },
+        48: { x: 60, y: 84 },
+        49: { x: 60, y: 78 },
+        50: { x: 60, y: 72 },
+        51: { x: 60, y: 66 },
+        52: { x: 60, y: 60 },
+        53: { x: 60, y: 54 },
+        54: { x: 60, y: 48 },
+        55: { x: 60, y: 43 },
+        56: { x: 60, y: 39 },
+        57: { x: 54, y: 39 },
+        58: { x: 48, y: 39 },
+        59: { x: 42, y: 39 },
+        60: { x: 37, y: 39 },
+        61: { x: 33, y: 39 },
+        62: { x: 30, y: 39 },
+        63: { x: 27, y: 39 },
+        64: { x: 27, y: 42 },
+        65: { x: 21, y: 39 },
+        66: { x: 15, y: 39 },
+        67: { x: 9, y: 39 },
+        68: { x: 6, y: 39 },
+        69: { x: 6, y: 42 },
+        70: { x: 6, y: 46 },
+        71: { x: 33, y: 45 },
+        72: { x: 33, y: 51 },
+        73: { x: 33, y: 57 },
+        74: { x: 42, y: 55 },
+        75: { x: 42, y: 48 },
+        76: { x: 42, y: 43 },
+        77: { x: 48, y: 48 },
+        78: { x: 54, y: 48 },
+        79: { x: 9, y: 33 },
+        80: { x: 9, y: 27 },
+        81: { x: 15, y: 27 },
+        82: { x: 21, y: 27 },
+        83: { x: 15, y: 21 },
+        84: { x: 15, y: 15 },
+        85: { x: 21, y: 15 },
+        86: { x: 15, y: 9 },
+        87: { x: 15, y: 3 },
+        88: { x: 21, y: 3 },
+        89: { x: 11, y: 3 },
+        90: { x: 7, y: 3 },
+        91: { x: 3, y: 3 },
+        92: { x: 3, y: 9 },
+        93: { x: 3, y: 15 },
+        94: { x: 3, y: 21 },
+        95: { x: 3, y: 27 },
+    }
+    static rosePos = [91, 18, 82, 48, 88, 5, 95, 39];
+    static exitPos = 85;
+
+    static player_color = "#00ff00";
+    static monster_color = "#ff0000";
+    static rose_color = "#f6a3ff";
+    static exit_color = "#ff9400";
+
+    static canvasId = "horrormazecanvas";
+
+    static getCanvas() {
+        let canvas = document.getElementById(this.canvasId);
+        if (!canvas) {
+            canvas = document.createElement('canvas');
+            canvas.width = 66;
+            canvas.height = 90;
+            canvas.id = this.canvasId;
+        }
+
+        return canvas;
+    }
+
+    /**
+     * @param {CanvasRenderingContext2D} ctx 
+     * @param {number} posId 
+     * @param {string} color
+     */
+    static drawRect(ctx, posId, color) {
+        let pos = this.poss[posId];
+        let x = 0;
+        let y = 0;
+        if (!!pos) {
+            x = pos.x;
+            y = pos.y;
+        }
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, 3, 3);
+        return ctx;
+    }
+
+    /**
+     * @param {CanvasRenderingContext2D} ctx 
+     * @param {number} posId 
+     * @param {number} dir ↑1 →2 ↓3 ←4
+     * @param {string} color 
+     */
+    static drawArrow(ctx, posId, dir, color) {
+        let pos = this.poss[posId];
+        let x = 0;
+        let y = 0;
+        if (!!pos) {
+            x = pos.x;
+            y = pos.y;
+        }
+        ctx.fillStyle = color;
+        if (dir === 1) {
+            ctx.fillRect(x, y - 2, 3, 1);
+            ctx.fillRect(x + 1, y - 3, 1, 1);
+        }
+        else if (dir === 2) {
+            ctx.fillRect(x + 4, y, 1, 3);
+            ctx.fillRect(x + 5, y + 1, 1, 1);
+        }
+        else if (dir === 3) {
+            ctx.fillRect(x, y + 4, 3, 1);
+            ctx.fillRect(x + 1, y + 5, 1, 1);
+        }
+        else if (dir === 4) {
+            ctx.fillRect(x - 2, y, 1, 3);
+            ctx.fillRect(x - 3, y + 1, 1, 1);
+        }
+        return ctx;
+    }
+
+    /**
+     * @param {CanvasRenderingContext2D} ctx 
+     * @param {number} posId 
+     * @param {number} dir ↑1 →2 ↓3 ←4
+     */
+    static drawPlayer(ctx, posId, dir) {
+        return this.drawArrow(this.drawRect(ctx, posId, this.player_color), posId, dir, this.player_color);
+    }
+
+    /**
+     * @param {CanvasRenderingContext2D} ctx 
+     * @param {number} posId 
+     */
+    static drawMonster(ctx, posId) {
+        return this.drawRect(ctx, posId, this.monster_color);
+    }
+
+    /**
+     * @param {CanvasRenderingContext2D} ctx 
+     * @param {number} roseCount 
+     */
+    static drawRoseOrExit(ctx, roseCount) {
+        if (roseCount < 8) {
+            let posId = this.rosePos[roseCount];
+            return this.drawRect(ctx, posId, this.rose_color);
+        }
+        else {
+            let posId = this.exitPos;
+            return this.drawRect(ctx, posId, this.exit_color);
+        }
+    }
+
+    static getImage(monsterPos, playerPos, playerDir, roseCount) {
+        /**@type {HTMLCanvasElement} */
+        let canvas = this.getCanvas();
+        let ctx = canvas.getContext('2d');
+        let img = new Image();
+        img.src = this.background;
+        ctx.drawImage(img, 0, 0, 66, 90);
+        ctx = this.drawRoseOrExit(ctx, roseCount);
+        ctx = this.drawPlayer(ctx, playerPos, playerDir);
+        if (roseCount > 0) {
+            ctx = this.drawMonster(ctx, monsterPos);
+        }
+        return canvas.toDataURL();
+    }
+}
+
+
+
 
 // 确保网页加载完成
 function check() {

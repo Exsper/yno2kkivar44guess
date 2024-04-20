@@ -64,4 +64,4 @@ hook onPlayerTeleported 获取 mapId（变量10） 和主角位置（变量22和
 
 ### 关于开关
 
-今后可能会尝试对开关的获取
+[获取开关功能已单独立项](https://github.com/Exsper/yno2kkiswitchcheck)
