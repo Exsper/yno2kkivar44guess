@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         YNOproject Yume2kki 变量44 推测
 // @namespace    https://github.com/Exsper/
-// @version      1.2.8
-// @description  本工具通过从 HEAPU32 中检索入睡次数（变量#43）来推测 变量#44 的地址，实时显示变量的数值。可以在 GreasyFork 页面查看详细说明。
+// @version      1.2.9
+// @description  本工具通过从 HEAPU8 中检索入睡次数（变量#43）来推测 变量#44 的地址，实时显示变量的数值。
 // @author       Exsper
 // @homepage     https://github.com/Exsper/yno2kkivar44guess#readme
 // @supportURL   https://github.com/Exsper/yno2kkivar44guess/issues
@@ -17,29 +17,44 @@
 let VAR_UPDATE_INTERVAL = 1000;
 
 /**
- * @param {Array<number>} sourceArray 
- * @param {Array<number>|number} aimArray 
+ * 从 HEAPU8 中按小端序读取 32 位无符号整数。
+ * 等价于旧版的 easyrpgPlayer["HEAPU32"][index]。
+ * 注意：WASM 内存增长后 HEAPU8 会被替换，所以每次都重新取引用。
+ * @param {number} index HEAPU32 语义下的索引（字节偏移 = index * 4）
+ * @returns {number}
  */
-function findDataIndex(sourceArray, aimArray) {
+function readU32(index) {
+    const heap = easyrpgPlayer["HEAPU8"];
+    const offset = index << 2;
+    return (heap[offset] |
+        (heap[offset + 1] << 8) |
+        (heap[offset + 2] << 16) |
+        (heap[offset + 3] << 24)) >>> 0;
+}
+
+/**
+ * 在 HEAPU8 中查找与 aimArray 匹配的 32 位数据序列，
+ * 返回匹配起点在 HEAPU32 语义下的索引数组。
+ * @param {Array<number>|number} aimArray
+ */
+function findDataIndex(aimArray) {
     if (typeof aimArray == "number") aimArray = [aimArray];
-    let index = 0;
-    let MAX_Index = sourceArray.length - 1;
-    let cmpIndex = 0;
-    let MAX_CmpIndex = aimArray.length - 1;
+    const heap = easyrpgPlayer["HEAPU8"];
+    const MAX_Index = (heap.length >> 2) - 1;
+    const MAX_CmpIndex = aimArray.length - 1;
+    // 先用首字节做快速过滤，避免对每个索引都做完整读取
+    const firstByte = aimArray[0] & 0xff;
     let finds = [];
-    while (index <= MAX_Index) {
-        if (sourceArray[index + cmpIndex] == aimArray[cmpIndex]) {
-            cmpIndex += 1;
-            if (cmpIndex > MAX_CmpIndex) {
-                finds.push(index);
-                cmpIndex = 0;
-                index += 1;
+    for (let index = 0; index <= MAX_Index; index++) {
+        if (heap[index << 2] !== firstByte) continue;
+        let matched = true;
+        for (let cmpIndex = 0; cmpIndex <= MAX_CmpIndex; cmpIndex++) {
+            if (readU32(index + cmpIndex) !== (aimArray[cmpIndex] >>> 0)) {
+                matched = false;
+                break;
             }
         }
-        else {
-            cmpIndex = 0;
-            index += 1;
-        }
+        if (matched) finds.push(index);
     }
     return finds;
 }
@@ -71,11 +86,11 @@ function filterMemory(sleepIndexList, sleepCount) {
     for (let i = 0; i < sleepIndexList.length; i++) {
         let num44Index = sleepIndexList[i] + 1;
         // #44范围为0-255
-        if (easyrpgPlayer["HEAPU32"][num44Index] > 255) continue;
+        if (readU32(num44Index) > 255) continue;
         // #94为季节，检查#94的值
-        if (easyrpgPlayer["HEAPU32"][num44Index + 50] != getSeason(sleepCount)) continue;
+        if (readU32(num44Index + 50) != getSeason(sleepCount)) continue;
         // 以下为可能值
-        if (easyrpgPlayer["HEAPU32"][num44Index] != 0)
+        if (readU32(num44Index) != 0)
             // #44很可能不为0，将不为0的位置前置
             qualifiedList.unshift(num44Index);
         else
@@ -140,7 +155,7 @@ class Script {
                 $statLabel.text("请输入正整数");
                 $checkButton.text("确定");
             }
-            let result = filterMemory(findDataIndex(easyrpgPlayer["HEAPU32"], sleepCount), sleepCount);
+            let result = filterMemory(findDataIndex(sleepCount), sleepCount);
             if (result.length <= 0) {
                 $checkButton.attr("disabled", false);
                 $statLabel.text("找不到符合条件的地址，请重试");
@@ -150,7 +165,7 @@ class Script {
                 this.sleepCount = sleepCount;
                 this.saveStorage();
                 this.memoryIndexs = result;
-                this.isZero = this.memoryIndexs.map(mi => easyrpgPlayer["HEAPU32"][mi] == 0);
+                this.isZero = this.memoryIndexs.map(mi => readU32(mi) == 0);
                 if (this.memoryIndexs.length > 1) {
                     $statLabel.text("找到多个符合条件的地址，请选择正确的#44变量。建议到伪部屋睡几次床，每次都会更新的就是#44变量");
                     this.updateSelectTable();
@@ -230,7 +245,7 @@ class Script {
 
     updateSelectTable() {
         if (this.memoryIndexs.length <= 0) return;
-        this.memoryIndexs = this.memoryIndexs.filter((mi) => easyrpgPlayer["HEAPU32"][mi] <= 255);
+        this.memoryIndexs = this.memoryIndexs.filter((mi) => readU32(mi) <= 255);
         let $mainTable = $("#rs-table");
         $mainTable.empty();
         let $thead = $("<thead>").appendTo($mainTable);
@@ -247,7 +262,7 @@ class Script {
             let $td = $("<td>").appendTo($tr);
             $("<span>", { text: "0x" + mi.toString(16) }).appendTo($td);
             $td = $("<td>").appendTo($tr);
-            $("<span>", { text: easyrpgPlayer["HEAPU32"][mi] }).appendTo($td);
+            $("<span>", { text: readU32(mi) }).appendTo($td);
             $td = $("<td>").appendTo($tr);
             let $selbtn = $("<a>", { text: "选择", "data-index": mi, style: "cursor: pointer;" }).appendTo($td);
             $selbtn.click(() => {
@@ -287,7 +302,7 @@ class Script {
         });
         // 地图项
         if (this.showMapDefaultVars > 0) {
-            let mapID = easyrpgPlayer["HEAPU32"][this.getVariableIndex(26)];
+            let mapID = readU32(this.getVariableIndex(26));
             dataTableData.push(...(MapVariable.getMapVariableData(mapID)));
             // 特殊地图刷新间隔
             VAR_UPDATE_INTERVAL = MapVariable.getMapUpdateInterval(mapID);
@@ -307,13 +322,13 @@ class Script {
             let data;
             if (varLineData.index instanceof Array === true) {
                 data = [];
-                for (let i = 0; i < varLineData.index.length; i++) data.push(easyrpgPlayer["HEAPU32"][this.getVariableIndex(varLineData.index[i])]);
+                for (let i = 0; i < varLineData.index.length; i++) data.push(readU32(this.getVariableIndex(varLineData.index[i])));
                 if (varLineData.callFuc) data = varLineData.callFuc(...data);
                 if (typeof data !== "object") $("<span>", { text: data, title: "使用变量：" + varLineData.index.join(",") }).appendTo($ltd);
                 else data.appendTo($ltd);
             }
             else {
-                data = easyrpgPlayer["HEAPU32"][this.getVariableIndex(varLineData.index)];
+                data = readU32(this.getVariableIndex(varLineData.index));
                 if (varLineData.callFuc) data = varLineData.callFuc(data);
                 if (typeof data !== "object") $("<span>", { text: data, title: "使用变量：" + varLineData.index }).appendTo($ltd);
                 else data.appendTo($ltd);
